@@ -6,27 +6,38 @@
 <h1>Documento</h1>
 <br />
 <div class="row">
-    <form>
-        <div class="form-group row">
-            <label for="numdoc" class="col-md-2 col-form-label">Número Documento:</label>
-            <div class="col-md-3">
-                <input type="number" class="form-control" id="numdoc" placeholder="Numero documento">
-            </div>
-            <input type="submit" class="col-md-1 btn btn-default" id="consultar" placeholder="Consultar" value="Consultar">
+    <div class="form-group row">
+        <label for="numdoc" class="col-md-2 col-form-label">Número Documento:</label>
+        <div class="col-md-3">
+            <input type="number" class="form-control" id="numdoc" placeholder="Numero documento">
         </div>
-        <div class="form-group row">
-            <label for="descrip" class="col-md-2 col-form-label">Descripción:</label>
-            <div class="col-md-3">
-                <input type="text" class="form-control" id="descrip" placeholder="Descripcion">
+        <input type="submit" class="col-md-1 btn btn-default" id="consultar" placeholder="Consultar" value="Consultar">
+    </div>
+    <div class="form-group row">
+        <label for="descrip" class="col-md-2 col-form-label">Descripción:</label>
+        <div class="col-md-3">
+            <input type="text" class="form-control" id="descrip" placeholder="Descripcion">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="fecha" class="col-md-2 col-form-label">Fecha:</label>
+        <div class="col-md-3">
+            @*<input type="text" class="form-control" id="fecha" placeholder="Fecha">*@
+            
+            <div class='input-group date' id='datetimepicker1'>
+                <input type='text' class="form-control" placeholder="dd/mm/yyyy" id="FechaDoc" name="FechaDoc" value="@DateTime.Today.Date.ToShortDateString()" style="z-index:auto"/>
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
             </div>
         </div>
-        <div class="form-group row">
-            <label for="fecha" class="col-md-2 col-form-label">Fecha:</label>
-            <div class="col-md-3">
-                <input type="text" class="form-control" id="fecha" placeholder="Fecha">
-            </div>
+    </div>
+    <div class="form-group row">
+        <label for="vendedor" class="col-md-2 col-form-label">Vendedor:</label>
+        <div class="col-md-3">
+            <select id="vendedor" class="form-control"></select>
         </div>
-    </form>
+    </div>
 </div>
 <div class="row">
     <h2>Detalle</h2>
@@ -35,25 +46,135 @@
     <hr />
 </div>
 <div class="row">
-    <form>
-        <div class="form-group row">
-            <label for="producto" class="col-md-1 col-form-label">Producto:</label>
-            <div class="col-md-2">
-                <input type="text" class="form-control" id="producto" placeholder="Producto">
-            </div>
-            <label for="precio" class="col-md-1 col-form-label">Precio:</label>
-            <div class="col-md-2">
-                <input type="text" class="form-control" id="precio" placeholder="Precio">
-            </div>
-            <input type="submit" class="col-md-1 btn btn-primary" id="agregar" placeholder="Agregar" value="Agregar">
+    <div class="form-group row">
+        <label for="producto" class="col-md-1 col-form-label">Producto:</label>
+        <div class="col-md-2">
+            <input type="text" class="form-control" id="codlin" placeholder="codlin" style="display:none;">
+            <input type="text" class="form-control" id="producto" placeholder="Producto">
         </div>
-    </form>
+        <label for="precio" class="col-md-1 col-form-label">Precio:</label>
+        <div class="col-md-2">
+            <input type="text" class="form-control" id="precio" placeholder="Precio">
+        </div>
+        <input type="submit" class="col-md-1 btn btn-primary" id="agregarlin" placeholder="Agregar" value="Agregar">
+        <input type="submit" class="col-md-1 btn btn-primary" id="actualizarlin" placeholder="Actualizar" value="Actualizar" style="display:none;">
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <table id="tblDetalle" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Linea</th>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 @section Scripts{
     <script type="text/javascript">
+
         $(document).ready(function () {
-            alert("prueba");
+            var dataVD = [];
+            $.ajax({
+                url: '/api/UnidadDeMedida/GetUnidadMedida',
+                type: 'get',
+                success: function (data) {
+                    dataVD = data;
+                }
+            });
+
+            var tblDet = $('#tblDetalle').DataTable(
+                {
+                    "scrollY": true,
+                    "scrollX": false,
+                    "searching": false,
+                    "language": {
+                        "lengthMenu": "Mostrar _MENU_ registros por página",
+                        "zeroRecords": "Lo sentimos, no se encontro!",
+                        "info": "Página _PAGE_ de _PAGES_",
+                        "infoEmpty": "No hay registros disponibles",
+                        "infoFiltered": "(Filtro de _MAX_ registros totales)",
+                        "paginate": { "next": "Siguiente", "previous": "Anterior" },
+                        "search": "Buscar:"
+                    },
+                    "columnDefs": [
+                        { "width": "10%", "targets": [0] },
+                        { "width": "50%", "targets": [1] },
+                        { "width": "20%", "targets": [2] },
+                        { "width": "20%", "targets": [3] }
+                    ],
+                    "ordering": false,
+                    "dom": 'frtip'
+                }
+            );
+            var lin = 0;
+            $('#agregarlin').click(function () {
+                lin = lin + 1;
+                tblDet.row.add([
+                    lin,
+                    document.getElementById("producto").value,
+                    document.getElementById("precio").value,
+                    '<input type="submit" class="btn btn-primary" id="editar" placeholder="Editar" value="Editar">  ' +
+                    '<input type="submit" class="btn btn-danger" id="eliminar" placeholder="Eliminar" value="Eliminar">'
+                ]).draw(false);
+
+                document.getElementById("producto").value = "";
+                document.getElementById("precio").value = "";
+            });
+            //Boton Eliminar fila
+            $('#tblDetalle tbody').on('click', 'tr .btn-danger', function () {
+                var fila = $(this).closest('tr');
+                tblDet.row(fila).remove().draw(false);
+            });
+            //Boton Editar fila
+            $('#tblDetalle tbody').on('click', 'tr .btn-primary', function () {
+                var fila = $(this).closest('tr');
+                var col = $(this).closest('td');
+                var data = tblDet.row(fila).data();
+                $("#codlin").val(data[0]);
+                $("#producto").val(data[1]);
+                $("#precio").val(data[2]);
+                document.getElementById("agregarlin").style.display = 'none';
+                document.getElementById("actualizarlin").style.display = 'block';
+            });
+
+            $('#actualizarlin').click(function () {
+                var codlin = $("#codlin");
+                var producto = $("#producto");
+                var precio = $("#precio");
+                if (producto != "") {
+                    var editLin = [
+                        codlin.val(),
+                        producto.val(),
+                        precio.val(),
+                        '<input type="submit" class="btn btn-primary" id="editar" placeholder="Editar" value="Editar">  ' +
+                        '<input type="submit" class="btn btn-danger" id="eliminar" placeholder="Eliminar" value="Eliminar">'
+                    ];
+
+                    tblDet.row(codlin.val() - 1).data(editLin).draw();
+                    codlin.val(""); producto.val(""); precio.val("");
+                }
+              
+            });
+
+            //$('.input-group.date').datepicker({
+            //    format: 'dd/mm/yyyy'
+            //}).on('changeDate', function (e) {
+            //    $(this).datepicker('hide');
+            //});
+            //$(function () {
+            //    $('#datetimepicker1').datetimepicker();
+            //});
+            $('#datetimepicker1').datetimepicker();
         });
+     
+       
+
     </script>
 }
